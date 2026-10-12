@@ -80,6 +80,7 @@ impl MatrixRenderer {
                 animate(&glyphs, *mode, motion, elapsed, stage, area)
             }
             ElementKind::Gif { .. } => bail!("GIF elements are decoded, not rendered"),
+            ElementKind::Asteroids { .. } => bail!("live asteroids require a persistent simulation"),
             // Fills the panel whatever its offset or turn.
             ElementKind::Flashlight { .. } => return Ok(RgbImage::from_pixel(geometry.width, geometry.height, WHITE)),
             // Its scale is applied when placing the drawn gauge, like a turn.
@@ -180,7 +181,7 @@ pub fn element_offset(kind: &ElementKind) -> (i32, i32) {
         | ElementKind::Text { x_offset, y_offset, .. }
         | ElementKind::Battery { x_offset, y_offset, .. }
         | ElementKind::Gif { x_offset, y_offset, .. } => (*x_offset, *y_offset),
-        ElementKind::Flashlight { .. } => (0, 0),
+        ElementKind::Flashlight { .. } | ElementKind::Asteroids { .. } => (0, 0),
     }
 }
 
@@ -245,7 +246,7 @@ impl Placement {
                 along_travel(*ignore_safe_area, *mode, *direction)
             }
             ElementKind::Gif { .. } => canvas,
-            ElementKind::Flashlight { .. } => canvas,
+            ElementKind::Flashlight { .. } | ElementKind::Asteroids { .. } => canvas,
         }
     }
 

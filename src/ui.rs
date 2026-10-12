@@ -602,6 +602,7 @@ fn profile_card(
         ("GIF/Image", Element::gif as fn() -> Element),
         ("Flashlight", Element::flashlight as fn() -> Element),
         ("Battery", Element::battery as fn() -> Element),
+        ("Live asteroids", Element::asteroids as fn() -> Element),
     ] {
         let button = gtk::Button::with_label(&format!("+ {label}"));
         let add_context = context.clone();
@@ -693,7 +694,7 @@ fn element_card(
     });
     heading.append(&expander);
     heading.append(&gtk::Label::builder().label(element.kind.label()).css_classes(["heading"]).xalign(0.0).hexpand(true).build());
-    if !matches!(element.kind, ElementKind::Flashlight { .. }) {
+    if !matches!(element.kind, ElementKind::Flashlight { .. } | ElementKind::Asteroids { .. }) {
         let rotation = gtk::SpinButton::with_range(-360.0, 360.0, 1.0);
         rotation.set_value(element.rotation as f64);
         rotation.set_tooltip_text(Some("Degrees to turn this element clockwise; type any value"));
@@ -1139,6 +1140,30 @@ fn element_card(
                 });
                 safe_area_row(&grid, 16, ignore_safe_area, context, target);
             }
+        }
+        ElementKind::Asteroids { speed, brightness, fps } => {
+            let pace = spin_row(&grid, 0, "Drift speed", 0.1, 3.0, f64::from(speed));
+            pace.set_digits(2);
+            pace.set_increments(0.1, 0.5);
+            pace.set_tooltip_text(Some("1 is a calm, slow drift. Shapes keep moving without a repeating loop."));
+            connect_element_spin(&pace, context.clone(), target.clone(), |kind, value| {
+                if let ElementKind::Asteroids { speed, .. } = kind { *speed = value as f32; }
+            });
+            let bright = spin_row(&grid, 1, "Brightness", 0.0, 1.0, f64::from(brightness));
+            bright.set_digits(2);
+            bright.set_increments(0.05, 0.1);
+            connect_element_spin(&bright, context.clone(), target.clone(), |kind, value| {
+                if let ElementKind::Asteroids { brightness, .. } = kind { *brightness = value as f32; }
+            });
+            let advanced = gtk::Expander::builder().label("Advanced").build();
+            let controls = gtk::Grid::builder().column_spacing(12).row_spacing(8).build();
+            let redraw = spin_row(&controls, 0, "Frame rate", 1.0, MAX_FPS as f64, f64::from(fps));
+            connect_element_spin(&redraw, context.clone(), target.clone(), |kind, value| {
+                if let ElementKind::Asteroids { fps, .. } = kind { *fps = value as f32; }
+            });
+            advanced.set_child(Some(&controls));
+            grid.attach(&advanced, 0, 2, 2, 1);
+            grid.attach(&gtk::Label::builder().label("Four shapes drift and collide within the panel.").wrap(true).xalign(0.0).build(), 0, 3, 2, 1);
         }
         ElementKind::Flashlight { brightness } => {
             let bright = spin_row(&grid, 0, "Brightness", 0.0, 1.0, brightness as f64);

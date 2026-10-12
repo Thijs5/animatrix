@@ -140,6 +140,7 @@ fn run_engine<C: MatrixControl>(
     let mut leaving: Option<Leaving> = None;
     let mut entering: Option<(Instant, Duration)> = None;
     let mut gif_cache: HashMap<PathBuf, GifAnimation> = HashMap::new();
+    let mut asteroids_cache: HashMap<String, crate::asteroids::Asteroids> = HashMap::new();
     // One animation cycle per element (keyed by its settings), for cycling.
     let mut cycle_cache: HashMap<String, Option<Duration>> = HashMap::new();
     let mut lid_closed_since: Option<Instant> = None;
@@ -385,6 +386,10 @@ fn run_engine<C: MatrixControl>(
             matches!(&element.kind, ElementKind::Gif { path: used, .. } if used == path)
         }));
 
+        asteroids_cache.retain(|id, _| profile.elements.iter().any(|element| {
+            element.id == *id && matches!(element.kind, ElementKind::Asteroids { .. })
+        }));
+
         let profile_json = serde_json::to_string(&profile).unwrap_or_else(|_| profile.id.clone());
         let shown: Vec<_> = visible.iter().map(|(element, _, _)| element.id.as_str()).collect();
         // Tilt is a global setting, so it is not in the profile.
@@ -471,6 +476,15 @@ fn run_engine<C: MatrixControl>(
                         }
                         let levels = stage.finish_levels(&levels, element, geometry, snapshot.tilt_per_row);
                         (matrix::level_buffer(&levels, *brightness, geometry), None)
+                    }
+                    ElementKind::Asteroids { speed, brightness, .. } => {
+                        if !asteroids_cache.contains_key(&element.id) {
+                            asteroids_cache.insert(element.id.clone(), crate::asteroids::Asteroids::new(geometry)?);
+                        }
+                        let scene = asteroids_cache.get_mut(&element.id).expect("simulation was inserted");
+                        // Keep physics monotonic even when the user changes frame rate.
+                        let frame = scene.frame_at(element_time, *speed);
+                        (matrix::led_buffer(&frame, *brightness, geometry), None)
                     }
                     ElementKind::Text { fps, outline, invert, color, .. } => {
                         let element_time = on_frame_grid(element_time, f64::from(*fps));
@@ -779,6 +793,7 @@ fn turn_length(
 /// Changes whenever the frame for a non-GIF profile needs redrawing.
 fn refresh_period(kind: &ElementKind, now: DateTime<Local>, elapsed: Duration) -> i64 {
     match kind {
+        ElementKind::Asteroids { fps, .. } => frame_index(elapsed, f64::from(*fps)),
         ElementKind::Clock { show_millis: true, fps, .. } => {
             (now.timestamp_millis() as f64 * f64::from(fps.max(1.0)) / 1000.0) as i64
         }
@@ -828,6 +843,7 @@ fn frame_interval(kind: &ElementKind, now: DateTime<Local>, elapsed: Duration) -
     const SETTLE: Duration = Duration::from_millis(5);
     let into_second = Duration::from_nanos(now.timestamp_subsec_nanos().into());
     match kind {
+        ElementKind::Asteroids { fps, .. } => Some(until_next_frame(elapsed, f64::from(*fps))),
         ElementKind::Text { mode, fps, .. } if *mode != TextMode::Static => Some(until_next_frame(elapsed, f64::from(*fps))),
         ElementKind::Text { .. } | ElementKind::Flashlight { .. } => None,
         ElementKind::Battery { style, .. } if style.is_animated() => Some(Duration::from_secs_f64(1.0 / BATTERY_FPS)),
@@ -1392,4 +1408,21 @@ mod tests {
         assert!(leds.contains(&background));
         assert!(leds.iter().any(|&led| led > background * 2));
     }
+    #[test]
+    fn live_asteroids_render_without_files_and_keep_refreshing() {
+        let mut config = AppConfig::default();
+        config.profiles[0].elements = vec![Element::asteroids()];
+        let control = FakeControl::default();
+        let (frames, last) = (Arc::clone(&control.frames), Arc::clone(&control.last));
+        let handle = EngineHandle::start_with(Arc::new(Mutex::new(config)), control);
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while frames.load(Ordering::Relaxed) < 3 && Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(10));
+        }
+        handle.send(EngineCommand::Shutdown);
+        assert!(frames.load(Ordering::Relaxed) >= 3, "live elements must continue redrawing");
+        assert!(last.lock().unwrap().iter().any(|&value| value > 200));
+        assert!(handle.status().is_none());
+    }
+
 }

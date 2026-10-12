@@ -580,6 +580,14 @@ impl Element {
         }
     }
 
+    pub fn asteroids() -> Self {
+        Self {
+            id: new_id(), rotation: 0.0, tilt_compensation: false, smooth_text: true,
+            turn: Some(TurnLength::default()), transition: Transition::default(),
+            kind: ElementKind::Asteroids { speed: 1.0, brightness: 1.0, fps: 10.0 },
+        }
+    }
+
     pub fn validate(&self) -> Result<()> {
         let Transition { fade_in, fade_out, pause } = self.transition;
         if [fade_in, fade_out, pause].iter().any(|seconds| !(0.0..=MAX_TRANSITION).contains(seconds)) {
@@ -686,6 +694,11 @@ impl Element {
                 if !(0.0..=MAX_FPS).contains(fps) {
                     bail!("GIF element FPS must be between 0 and {MAX_FPS}");
                 }
+            }
+            ElementKind::Asteroids { speed, brightness, fps } => {
+                if !(0.1..=3.0).contains(speed) { bail!("asteroids speed must be between 0.1 and 3"); }
+                if !(0.0..=1.0).contains(brightness) { bail!("asteroids brightness must be between 0 and 1"); }
+                if !(1.0..=MAX_FPS).contains(fps) { bail!("asteroids FPS must be between 1 and {MAX_FPS}"); }
             }
             ElementKind::Flashlight { brightness } => {
                 if !(0.0..=1.0).contains(brightness) {
@@ -877,6 +890,15 @@ pub enum ElementKind {
         #[serde(default = "default_gif_scale")]
         scale: f32,
     },
+    /// Four slow, continuously colliding shapes in the GA402's physical panel outline.
+    Asteroids {
+        #[serde(default = "default_asteroids_speed")]
+        speed: f32,
+        #[serde(default = "default_asteroids_brightness")]
+        brightness: f32,
+        #[serde(default = "default_asteroids_fps")]
+        fps: f32,
+    },
     /// Every LED on at `brightness`.
     Flashlight {
         brightness: f32,
@@ -905,6 +927,10 @@ pub enum ElementKind {
     },
 }
 
+fn default_asteroids_speed() -> f32 { 1.0 }
+fn default_asteroids_brightness() -> f32 { 1.0 }
+fn default_asteroids_fps() -> f32 { 10.0 }
+
 impl ElementKind {
     /// The play count older configurations set, for converting them.
     fn play_limit(&self) -> Option<u32> {
@@ -923,6 +949,7 @@ impl ElementKind {
             Self::Gif { .. } => "GIF/Image",
             Self::Flashlight { .. } => "Flashlight",
             Self::Battery { .. } => "Battery",
+            Self::Asteroids { .. } => "Live asteroids",
         }
     }
 }
@@ -1401,4 +1428,18 @@ mod tests {
             ContentArea { x: 14, y: 19, width: 40, height: 20 }
         );
     }
+    #[test]
+    fn live_asteroids_defaults_round_trip_and_reject_invalid_controls() {
+        let element: Element = serde_json::from_str(r#"{"id":"live","type":"asteroids"}"#).unwrap();
+        assert!(element.validate().is_ok());
+        assert!(matches!(element.kind, ElementKind::Asteroids { speed: 1.0, brightness: 1.0, fps: 10.0 }));
+        let json = serde_json::to_string(&element).unwrap();
+        assert_eq!(serde_json::from_str::<Element>(&json).unwrap(), element);
+        for value in [0.0, 4.0, f32::NAN, f32::INFINITY] {
+            let mut invalid = element.clone();
+            if let ElementKind::Asteroids { speed, .. } = &mut invalid.kind { *speed = value; }
+            assert!(invalid.validate().is_err());
+        }
+    }
+
 }
