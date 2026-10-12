@@ -1,0 +1,55 @@
+from PIL import Image,ImageDraw,ImageFont
+from pathlib import Path
+im=Image.new('RGB',(1440,940),'#101317');d=ImageDraw.Draw(im)
+fontpath='/usr/share/fonts/TTF/DejaVuSans.ttf'
+def text(x,y,s,size=16,color='#E5EBEF'):
+ d.text((x,y),s,font=ImageFont.truetype(fontpath,size),fill=color)
+def rect(box,fill,r=10,outline=None):d.rounded_rectangle(box,r,fill=fill,outline=outline)
+def rule(x1,y1,x2,y2):d.line((x1,y1,x2,y2),fill='#30373E')
+def btn(box,label,fill='#263139',color='#E5EBEF'):
+ rect(box,fill,7);text(box[0]+15,box[1]+11,label,15,color)
+text(28,25,'ANIMATRIX',22);text(212,31,'Design studio',15,'#88959F')
+btn((1100,18,1210,62),'Device');btn((1230,18,1408,62),'Display on',fill='#244339',color='#BCE9CF');rule(0,82,1440,82)
+rect((0,83,264,940),'#161B20',0);rule(264,82,264,940)
+text(26,113,'Your designs',19);text(26,149,'3 designs',13,'#89959F')
+for i,(slug,name,sub) in enumerate([('tron','Circuit','Travelling light pulses'),('tron-grid','Grid','Perspective motion'),('tron-portal','Portal','Geometric energy rings')]):
+ y=192+i*172
+ rect((16,y,248,y+156),'#25343C' if i==0 else '#1C2329',10,'#7FB8CD' if i==0 else None)
+ preview=Image.open(Path(__file__).parent/'concept-assets'/f'{slug}-preview.png').convert('RGB').crop((22,75,645,425));preview.thumbnail((200,82))
+ im.paste(preview,(31,y+12));text(30,y+103,name,16);text(30,y+129,sub,12,'#A2AFB8')
+btn((20,746,244,790),'+ Import image or GIF');btn((20,803,244,847),'+ Create design')
+text(25,895,'Laptop: Circuit',13,'#9AC9B1')
+text(295,113,'Circuit',27);text(296,155,'Preview your design before applying it.',14,'#A3AFB9')
+btn((830,115,990,158),'Apply to laptop',fill='#ADD9E9',color='#10232A')
+rect((294,193,998,717),'#0B0E12',15)
+# Approximate lid boundary frames the correctly mapped LED preview.
+rect((323,226,970,677),'#151A20',15,outline='#39434C')
+p=Image.open(Path.home()/'.local/share/animatrix/artwork/tron-preview.png').convert('RGB').crop((20,74,650,428));p=p.resize((595,335))
+im.paste(p,(348,260));rule(536,681,757,681)
+btn((314,740,432,784),'Pause');text(455,753,'12 second loop',14,'#A3AFB9')
+text(314,820,'On your laptop',14,'#A4B1BB');text(314,852,'Circuit',20)
+text(314,891,'Changes appear in the preview. Apply when ready.',13,'#8F9DA8')
+rule(1028,82,1028,940);text(1056,116,'Design controls',20)
+text(1056,167,'ANIMATION',12,'#8F9DA8')
+for y,label,val,pos in [(217,'Brightness','35%',.35),(307,'Speed','1.0×',.5)]:
+ text(1056,y,label);text(1341,y,val,15,'#B7DCE9');rect((1057,y+39,1392,y+45),'#35414B',3)
+ d.line((1057,y+42,1057+335*pos,y+42),fill='#ADD9E9',width=5)
+ cx=1057+335*pos;d.ellipse((cx-7,y+35,cx+7,y+49),fill='#D7ECF3')
+text(1056,414,'Fits your LED panel automatically.',14,'#A3AFB9')
+rule(1056,461,1393,461);text(1056,493,'Advanced controls  ›',16,'#ABB8C2')
+text(1056,536,'Layers, timing, and placement',14,'#8F9DA8')
+text(1056,896,'Draft saved locally',13,'#8F9DA8')
+p=Path(__file__).with_name('interface-concept.png');im.save(p);print(p.resolve())
+# Second concept shows progressive disclosure in the same inspector.
+rect((1042,393,1423,875),'#101317',0)
+text(1056,415,'Advanced controls  ⌄',16)
+text(1056,463,'Layers  ⌄',16);text(1056,498,'1 image · Circuit',14,'#A3AFB9')
+btn((1056,532,1213,575),'+ Add layer');btn((1226,532,1392,575),'Edit image',fill='#1D242B')
+rule(1056,606,1393,606)
+text(1056,633,'Motion and timing  ›',16)
+text(1056,670,'Loop · original frame timing',13,'#8F9DA8')
+rule(1056,708,1393,708)
+text(1056,735,'Placement and appearance  ›',16)
+text(1056,774,'Original size · centered',13,'#8F9DA8')
+btn((1056,818,1228,861),'Reset this design',fill='#1D242B')
+p=Path(__file__).with_name('interface-concept-advanced.png');im.save(p);print(p.resolve())
