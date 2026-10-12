@@ -16,16 +16,14 @@ PERIOD, SIM_TIME, FPS, DT = 180.0, 72.0, 10, .05
 STROKE_MARGIN, GAP = 1.0, .65
 # x,y,radius,sides,angle,brightness; circles are approximated by 24 sides for collisions.
 BODIES = [
-    (-18,18.4,1.4,4,0,235),
-    (-11,21,1.8,4,.1,220),
-    (-3,24,2.1,3,-math.pi/2,225),
-    (4,28,2.65,4,math.pi/4,205),
-    (13,31,2.9,0,0,240),
-    (8,19.4,2.3,4,math.pi/4,210),
-    (20,37,2.2,3,-math.pi/2,225),
+    (-15,19.2,1.7,4,.37,235),
+    (11,20.5,2.5,3,.68,225),
+    (1,29,2.7,6,.19,220),
+    (19,37,2.6,0,0,235),
 ]
-VELOCITIES = np.array([(.12,.025),(.14,.055),(.04,.07),(.23,.08),(-.20,-.025),(-.055,.14),(-.12,-.09)])
-SPINS = np.array([.006,-.008,.009,-.006,.0,.005,-.007])
+# Uneven positions and independent headings avoid an orderly starting formation.
+VELOCITIES = np.array([(.14,.05),(-.08,.17),(.14,-.055),(-.17,-.07)])
+SPINS = np.array([.007,-.008,.005,0.0])
 RADII = np.array([b[2] for b in BODIES])
 MASSES = RADII**2
 INV_MASS = 1/MASSES

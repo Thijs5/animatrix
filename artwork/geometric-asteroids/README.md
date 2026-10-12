@@ -1,6 +1,6 @@
 # Geometric Asteroids
 
-Seven monochrome outlined circles and regular polygons drift very slowly, rotate gently, and bounce against each other and the GA402 AniMe Matrix's actual tapered boundary. Brightness stays steady; there are no particle effects or flashes.
+Four monochrome outlined shapes—a square, triangle, hexagon, and circle—start scattered at uneven positions and angles. They drift very slowly, rotate gently, and bounce against each other and the GA402 AniMe Matrix's actual tapered boundary. Brightness stays steady; there are no particle effects or flashes.
 
 The simulation uses convex-polygon separating-axis collisions, elastic impulses weighted by body size, and reflection against the convex hull of the physical LED coordinates. Its small time steps and iterative contact correction prevent pass-through and overlap.
 
