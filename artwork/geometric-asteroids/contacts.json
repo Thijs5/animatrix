@@ -1,0 +1,96 @@
+[
+  {
+    "time": 8.25,
+    "kind": "pair",
+    "bodies": [
+      3,
+      4
+    ]
+  },
+  {
+    "time": 21.6,
+    "kind": "pair",
+    "bodies": [
+      4,
+      6
+    ]
+  },
+  {
+    "time": 23.25,
+    "kind": "pair",
+    "bodies": [
+      2,
+      3
+    ]
+  },
+  {
+    "time": 32.0,
+    "kind": "pair",
+    "bodies": [
+      1,
+      2
+    ]
+  },
+  {
+    "time": 34.35,
+    "kind": "wall",
+    "body": 6
+  },
+  {
+    "time": 37.8,
+    "kind": "wall",
+    "body": 3
+  },
+  {
+    "time": 44.9,
+    "kind": "pair",
+    "bodies": [
+      0,
+      1
+    ]
+  },
+  {
+    "time": 47.05,
+    "kind": "pair",
+    "bodies": [
+      3,
+      5
+    ]
+  },
+  {
+    "time": 51.5,
+    "kind": "pair",
+    "bodies": [
+      2,
+      3
+    ]
+  },
+  {
+    "time": 54.0,
+    "kind": "wall",
+    "body": 0
+  },
+  {
+    "time": 60.25,
+    "kind": "pair",
+    "bodies": [
+      4,
+      5
+    ]
+  },
+  {
+    "time": 64.85,
+    "kind": "wall",
+    "body": 0
+  },
+  {
+    "time": 68.75,
+    "kind": "wall",
+    "body": 6
+  },
+  {
+    "time": 71.5,
+    "kind": "wall",
+    "body": 0
+  }
+]
