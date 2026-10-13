@@ -14,8 +14,11 @@ PHYSICAL = np.array([((x-y)/math.sqrt(2),(x+y)/math.sqrt(2)*.65) for x,y in LEDS
 SAMPLES = PHYSICAL[:,None,:] + np.array([[-.14,-.14],[-.14,.14],[.14,-.14],[.14,.14]])
 # Exact stepped O silhouette from /usr/share/omarchy/logo.svg.
 # Deliberate upper-right badge placement with generous dark space around it.
-CENTER = np.array([20.0,24.0])
 SCALE = 10 / 240
+ANCHOR_X = 20.0
+# Match top/right in physical lid proportions, measured from the O silhouette.
+EDGE_GAP = PHYSICAL[:,0].max()-ANCHOR_X-67.5*SCALE
+CENTER = np.array([ANCHOR_X,PHYSICAL[:,1].min()+120*SCALE+EDGE_GAP])
 OUTER = np.array([(105,30),(120,30),(120,45),(135,45),(135,225),
  (120,225),(120,240),(105,240),(105,255),(30,255),(30,240),
  (15,240),(15,225),(0,225),(0,45),(15,45),(15,30),(30,30),
@@ -105,6 +108,9 @@ def export():
     assert np.array_equal(levels(0),levels(10))
     assert not np.array_equal(levels(0),levels(11))
     assert np.count_nonzero(levels(0)!=levels(11))<100, 'Glitch must be local'
+    top_gap=OUTER[:,1].min()-PHYSICAL[:,1].min()
+    right_gap=PHYSICAL[:,0].max()-OUTER[:,0].max()
+    assert abs(top_gap-right_gap)<1e-9, 'Top/right spacing must match'
     assert len(set(LEDS))==1449
     assert np.array_equal(levels(0),levels(PERIOD))
     assert np.max(np.abs(levels((PERIOD*FPS-1)/FPS).astype(int)-levels(0).astype(int)))<=1
