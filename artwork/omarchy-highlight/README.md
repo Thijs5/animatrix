@@ -1,6 +1,6 @@
 # Omarchy O / Quiet Highlight
 
-The actual stepped O from Omarchy's wordmark, centred on the physical GA402 LED area. A slowly angled band of light passes over it, inspired by the installed Omarchy screensaver's highlight effect. Geometry and placement stay fixed, and the full letter remains visible.
+The actual stepped O from Omarchy's wordmark, placed toward the horizontal centre of the full lid rather than the right-heavy LED-area centroid. The optical anchor is (0, 25.5) in physical LED coordinates, and its height is 14 units. This is an approximate lid alignment, based on the GA402 lid layout; the letter has 0.85 units of clearance from the panel boundary. A slowly angled band of light passes over it, inspired by the installed Omarchy screensaver's highlight effect. Geometry and placement stay fixed, and the full letter remains visible.
 
 A pass lasts 24 seconds, with four seconds of calm before and after it. The moving highlight smoothly gains and loses strength, avoiding any visible return stroke. Letter brightness is 210–244 out of 255; the narrow halo is 14–26. The 32-second exported loop's first and final frames are identical.
 

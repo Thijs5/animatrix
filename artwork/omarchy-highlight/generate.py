@@ -13,9 +13,10 @@ LEDS = [(x+i,38-y-i) for x,y,n in RUNS for i in range(n)]
 PHYSICAL = np.array([((x-y)/math.sqrt(2),(x+y)/math.sqrt(2)*.65) for x,y in LEDS])
 SAMPLES = PHYSICAL[:,None,:] + np.array([[-.14,-.14],[-.14,.14],[.14,-.14],[.14,.14]])
 # Exact stepped O silhouette from /usr/share/omarchy/logo.svg.
-# Wordmark coordinates are centred on the physical LED area centroid.
-CENTER = PHYSICAL.mean(axis=0)
-SCALE = 16 / 240
+# Approximate optical placement toward the lid centre, not the LED centroid.
+# Smaller height leaves room along the lower diagonal boundary.
+CENTER = np.array([0.0,25.5])
+SCALE = 14 / 240
 OUTER = np.array([(105,30),(120,30),(120,45),(135,45),(135,225),
  (120,225),(120,240),(105,240),(105,255),(30,255),(30,240),
  (15,240),(15,225),(0,225),(0,45),(15,45),(15,30),(30,30),
