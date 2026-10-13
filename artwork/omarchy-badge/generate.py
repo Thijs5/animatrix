@@ -14,7 +14,7 @@ PHYSICAL = np.array([((x-y)/math.sqrt(2),(x+y)/math.sqrt(2)*.65) for x,y in LEDS
 SAMPLES = PHYSICAL[:,None,:] + np.array([[-.14,-.14],[-.14,.14],[.14,-.14],[.14,.14]])
 # Exact stepped O silhouette from /usr/share/omarchy/logo.svg.
 # Deliberate upper-right badge placement with generous dark space around it.
-CENTER = np.array([20.0,25.5])
+CENTER = np.array([20.0,24.0])
 SCALE = 10 / 240
 OUTER = np.array([(105,30),(120,30),(120,45),(135,45),(135,225),
  (120,225),(120,240),(105,240),(105,255),(30,255),(30,240),
