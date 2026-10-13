@@ -1,6 +1,6 @@
 # Live asteroids
 
-Choose **+ Live asteroids** inside a profile to add four slow, colliding outlines: a square, triangle, elongated rectangle, and circle. The forms start scattered at different angles. The larger square and rectangle remain distinct at the GA402's dot resolution.
+Choose **+ Live asteroids** inside a profile to add four slow, colliding outlines: the controller symbols square, triangle, cross, and circle (□ △ × ○). The forms start scattered at different angles. The cross has slightly thicker strokes for clarity at the GA402's dot resolution.
 
 The simulation runs continuously. It has no GIF reload, fixed playback loop, collective reversal, or periodic reset. Shapes collide with one another and reflect from the physical panel outline. A profile restart intentionally starts a fresh scene. A long suspension gap is skipped so resuming does not fast-forward the shapes.
 

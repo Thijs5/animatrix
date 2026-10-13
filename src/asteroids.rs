@@ -61,6 +61,7 @@ struct Body {
     radius: f64,
     brightness: f64,
     circle: bool,
+    cross: bool,
 }
 impl Body {
     fn polygon(
@@ -87,6 +88,7 @@ impl Body {
             spin,
             brightness,
             circle: false,
+            cross: false,
         }
     }
     fn vertices(&self) -> Vec<Point> {
@@ -102,8 +104,7 @@ impl Body {
 }
 
 fn initial_bodies() -> Vec<Body> {
-    // Four unevenly placed forms. A larger square and an elongated rectangle
-    // distinguish the silhouettes at the actual dot resolution.
+    // Four scattered controller symbols: square, triangle, cross, circle.
     let square = Body::polygon(
         Point::new(-14.0, 19.2),
         Point::new(0.10, -0.04),
@@ -122,7 +123,7 @@ fn initial_bodies() -> Vec<Body> {
         -0.008,
         225.0,
     );
-    let mut rectangle = Body::polygon(
+    let mut cross = Body::polygon(
         Point::new(1.0, 29.0),
         Point::new(0.12, -0.04),
         1.0,
@@ -131,13 +132,15 @@ fn initial_bodies() -> Vec<Body> {
         0.005,
         220.0,
     );
-    rectangle.local = vec![
-        Point::new(-2.8, -1.4),
-        Point::new(2.8, -1.4),
-        Point::new(2.8, 1.4),
-        Point::new(-2.8, 1.4),
+    cross.local = vec![
+        Point::new(-1.9, -1.9),
+        Point::new(1.9, -1.9),
+        Point::new(1.9, 1.9),
+        Point::new(-1.9, 1.9),
     ];
-    rectangle.radius = (2.8_f64 * 2.8 + 1.4 * 1.4).sqrt();
+    // The convex envelope keeps crossing strokes from interlocking on collision.
+    cross.radius = 1.9 * 2.0_f64.sqrt();
+    cross.cross = true;
     let mut circle = Body::polygon(
         Point::new(18.5, 36.7),
         Point::new(-0.12, -0.12),
@@ -148,7 +151,13 @@ fn initial_bodies() -> Vec<Body> {
         235.0,
     );
     circle.circle = true;
-    vec![square, triangle, rectangle, circle]
+    vec![square, triangle, cross, circle]
+}
+
+fn segment_distance(q: Point, a: Point, b: Point) -> f64 {
+    let v = b - a;
+    let f = ((q - a).dot(v) / v.dot(v)).clamp(0.0, 1.0);
+    (q - a - v * f).length()
 }
 
 fn hull(mut points: Vec<Point>) -> Vec<Point> {
@@ -374,17 +383,18 @@ impl Asteroids {
                     }
                     let distance = if body.circle {
                         (delta.length() - body.radius).abs()
+                    } else if body.cross {
+                        [(0, 2), (1, 3)]
+                            .into_iter()
+                            .map(|(i, j)| segment_distance(q, poly[i], poly[j]))
+                            .fold(f64::INFINITY, f64::min)
                     } else {
                         (0..poly.len())
-                            .map(|i| {
-                                let a = poly[i];
-                                let v = poly[(i + 1) % poly.len()] - a;
-                                let f = ((q - a).dot(v) / v.dot(v)).clamp(0.0, 1.0);
-                                (q - a - v * f).length()
-                            })
+                            .map(|i| segment_distance(q, poly[i], poly[(i + 1) % poly.len()]))
                             .fold(f64::INFINITY, f64::min)
                     };
-                    let core = ((0.85 - distance) / 0.65).clamp(0.0, 1.0);
+                    let width = if body.cross { 0.95 } else { 0.85 };
+                    let core = ((width - distance) / 0.65).clamp(0.0, 1.0);
                     lit = lit
                         .max(body.brightness * core + 10.0 * (-distance * distance / 1.21).exp());
                 }

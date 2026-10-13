@@ -1163,7 +1163,7 @@ fn element_card(
             });
             advanced.set_child(Some(&controls));
             grid.attach(&advanced, 0, 2, 2, 1);
-            grid.attach(&gtk::Label::builder().label("Four shapes drift and collide within the panel.").wrap(true).xalign(0.0).build(), 0, 3, 2, 1);
+            grid.attach(&gtk::Label::builder().label("Square, triangle, cross, and circle drift and collide within the panel.").wrap(true).xalign(0.0).build(), 0, 3, 2, 1);
         }
         ElementKind::Flashlight { brightness } => {
             let bright = spin_row(&grid, 0, "Brightness", 0.0, 1.0, brightness as f64);
