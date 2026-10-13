@@ -1,0 +1,84 @@
+"""Centred Omarchy O with a breathing halo, sampled for the GA402's 1,449 LEDs.
+Run with Python, NumPy and Pillow. No desktop changes are made.
+"""
+from pathlib import Path
+import math
+import numpy as np
+from PIL import Image, ImageDraw
+OUT = Path(__file__).resolve().parent
+PERIOD, FPS = 24, 10
+HEAD = [(0,5),(1,5),(1,4),(2,4),(2,3),(3,3),(3,2),(4,2),(4,1),(5,1),(5,0),(6,0)]
+RUNS = [(x,y,34) for x,y in HEAD] + [(x,0,33-(x-7)//2) for x in range(7,56)]
+LEDS = [(x+i,38-y-i) for x,y,n in RUNS for i in range(n)]
+PHYSICAL = np.array([((x-y)/math.sqrt(2),(x+y)/math.sqrt(2)*.65) for x,y in LEDS])
+SAMPLES = PHYSICAL[:,None,:] + np.array([[-.14,-.14],[-.14,.14],[.14,-.14],[.14,.14]])
+# Exact stepped O silhouette from /usr/share/omarchy/logo.svg.
+# Wordmark coordinates are centred on the physical LED area centroid.
+CENTER = PHYSICAL.mean(axis=0)
+SCALE = 16 / 240
+OUTER = np.array([(105,30),(120,30),(120,45),(135,45),(135,225),
+ (120,225),(120,240),(105,240),(105,255),(30,255),(30,240),
+ (15,240),(15,225),(0,225),(0,45),(15,45),(15,30),(30,30),
+ (30,15),(105,15)],dtype=float)
+INNER = np.array([(45,45),(90,45),(90,225),(45,225)],dtype=float)
+OUTER = (OUTER-[67.5,135])*SCALE+CENTER
+INNER = (INNER-[67.5,135])*SCALE+CENTER
+# Sixteen coverage samples preserve the squared steps and inner opening.
+SAMPLES = PHYSICAL[:,None,:] + np.array([(x,y) for x in [-.3,-.1,.1,.3] for y in [-.3,-.1,.1,.3]])
+def inside(poly):
+    x,y = SAMPLES[...,0],SAMPLES[...,1]
+    result = np.zeros(x.shape,dtype=bool)
+    for a,b in zip(poly,np.roll(poly,-1,axis=0)):
+        if a[1]==b[1]: continue
+        cross = ((a[1]>y)!=(b[1]>y)) & (x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])
+        result ^= cross
+    return result
+FILLED = inside(OUTER) & ~inside(INNER)
+COVERAGE = FILLED.mean(axis=1)
+# Distance to either silhouette boundary; light only the unfilled surroundings.
+DISTANCE = np.full(FILLED.shape,np.inf)
+for poly in [OUTER, INNER]:
+    for a,b in zip(poly,np.roll(poly,-1,axis=0)):
+        v = b-a
+        f = np.clip(np.sum((SAMPLES-a)*v,axis=-1)/np.dot(v,v),0,1)
+        DISTANCE = np.minimum(DISTANCE,np.linalg.norm(SAMPLES-a-f[...,None]*v,axis=-1))
+HALO = (~FILLED)*np.exp(-(DISTANCE/1.05)**2)
+def levels(t):
+    # Letter stays steady; only the narrow halo breathes between 8 and 38.
+    strength = 8+30*(.5+.5*math.cos(math.tau*t/PERIOD))
+    return np.rint((228*FILLED+strength*HALO).mean(axis=1)).astype(np.uint8)
+
+def raw(t):
+    im=Image.new('L',(74,39))
+    for p,v in zip(LEDS,levels(t)): im.putpixel(p,int(v))
+    return im
+
+def preview(t):
+    im=Image.new('RGB',(900,550),(8,10,14));d=ImageDraw.Draw(im)
+    for (u,v),value in zip(PHYSICAL,levels(t)):
+        x,y=54+(u+23.34)*16,71+(v-15.16)*16
+        c=round(9+float(value)*.96)
+        d.ellipse((x-3,y-3,x+3,y+3),fill=(c,c,c))
+    return im
+
+def export():
+    palette=[c for i in range(256) for c in (i,i,i)]
+    frames=[]
+    for i in range(PERIOD*FPS):
+        f=raw(i/FPS).convert('P');f.putpalette(palette);frames.append(f)
+    frames[0].save(OUT/'omarchy.gif',save_all=True,append_images=frames[1:],duration=100,loop=0,disposal=1,optimize=False)
+    raw(0).save(OUT/'omarchy.png');preview(0).save(OUT/'preview.png')
+    previews=[preview(i/2) for i in range(PERIOD*2)]
+    previews[0].save(OUT/'preview.gif',save_all=True,append_images=previews[1:],duration=500,loop=0)
+    svg=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="-25 14 52 32">','<rect x="-25" y="14" width="52" height="32" fill="#080a0e"/>']
+    contours=[]
+    for poly in [OUTER,INNER]:
+        contours.append('M'+' L'.join(f'{x:.4f},{y:.4f}' for x,y in poly)+' Z')
+    svg.append('<path d="'+' '.join(contours)+'" fill="#e4e4e4" fill-rule="evenodd"/>')
+    (OUT/'drawing.svg').write_text('\n'.join(svg+['</svg>'])+'\n')
+    assert np.array_equal(levels(0)[COVERAGE==1],levels(PERIOD/2)[COVERAGE==1]), 'Letter must stay steady'
+    assert len(set(LEDS))==1449
+    assert np.array_equal(levels(0),levels(PERIOD))
+    assert np.max(np.abs(levels((PERIOD*FPS-1)/FPS).astype(int)-levels(0).astype(int)))<=1
+    print('Exported static artwork and seamless 24-second halo breath.')
+if __name__=='__main__':export()
